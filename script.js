@@ -1,11 +1,42 @@
-var shake = new Shake();
+(function () {
+  'use strict';
 
-shake.start();
+  var body = document.body;
+  var STORAGE_KEY = 'theme';
 
-function switchMode () {
-  var new_mode = document.body.classList.contains('dark') ? 'light' : 'dark';
-  document.body.classList.remove(new_mode === 'light' ? 'dark' : 'light');
-  document.body.classList.add(new_mode);
-}
+  function applyTheme(mode) {
+    body.classList.toggle('dark', mode === 'dark');
+  }
 
-window.addEventListener('shake', switchMode, false);
+  function currentMode() {
+    return body.classList.contains('dark') ? 'dark' : 'light';
+  }
+
+  function switchMode() {
+    var next = currentMode() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+  }
+
+  // Initial theme: saved preference > system preference > light
+  var saved;
+  try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  if (saved) {
+    applyTheme(saved);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    applyTheme('dark');
+  }
+
+  // Toggle button
+  var toggle = document.getElementById('themeToggle');
+  if (toggle) {
+    toggle.addEventListener('click', switchMode);
+  }
+
+  // Shake to toggle (mobile)
+  if (typeof Shake === 'function') {
+    var shake = new Shake();
+    shake.start();
+    window.addEventListener('shake', switchMode, false);
+  }
+})();
